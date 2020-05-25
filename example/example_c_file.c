@@ -4,7 +4,7 @@ main() {
   b = 5;
   while (a > 0) {
     b = a + b * a;
-    a = a – 1;
+    a = a - 1;
   };
   x = a + b;
   y = b + b;
