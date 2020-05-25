@@ -1,0 +1,15 @@
+main() {
+  int a, b, x, y, max;
+  a = 10;
+  b = 5;
+  while (a > 0) {
+    b = a + b * a;
+    a = a – 1;
+  };
+  x = a + b;
+  y = b + b;
+  if (x > y)
+    max = x;
+  else
+    max = y;
+}
