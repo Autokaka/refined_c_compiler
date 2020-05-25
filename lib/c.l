@@ -25,22 +25,27 @@
 "do" {
   return DoStatement;
 }
-[a-zA-Z] {
-  return Letter;
-}
 "+"|"-" {
   return AddOperator;
 }
 "*"|"/" {
   return MultiplyOperator;
 }
-[0-9] {
+[a-zA-Z] {
+  yylval.char_type = yytext[0];
+  return Letter;
+}
+[0-9]+ {
+  yylval.int_type = atoi(yytext);
   return Number;
 }
-[ \t\n] {/* ignore symbols */}
-. {
-  printf("unanalysed charactor: %s\n", yytext);
+","|";"|"="|"{"|"}"|"("|")" {
+  printf("scanning symbol: %c\n", yytext[0]);
   return yytext[0];
+}
+[ \t\n\r\f\v] {/* ignore symbols */}
+. {
+  printf("unexpected charactor: %c\n", yytext[0]);
 }
 %%
 

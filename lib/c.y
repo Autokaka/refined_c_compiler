@@ -1,6 +1,10 @@
 %{
 #include <stdio.h>
-void yyerror(char *s);
+#include <math.h>
+extern int yylineno;
+int yylex(void);
+int yyerror(const char *s);
+int success = 1;
 %}
 
 /* 类型 */
@@ -13,7 +17,7 @@ void yyerror(char *s);
 /* 终结符 */
 %token <str_type>   MainDeclaration     // main()
 %token <str_type>   VarDeclaration      // int
-%token <str_type>   RelationOperator  // <|>|!=|>=|<=|==
+%token <str_type>   RelationOperator    // <|>|!=|>=|<=|==
 %token <str_type>   IfStatement         // if
 %token <str_type>   ElseStatement       // else
 %token <str_type>   WhileStatement      // while
@@ -24,8 +28,8 @@ void yyerror(char *s);
 %token <int_type>   Number              // 0|1|2|3|4...
 
 /* 非终结符 */
-%start MainProgram
-%type <str_type> MainProgram
+%start Program
+%type <str_type> Program
 %type <str_type> SubProgram
 %type <str_type> VarDeclarationPart 
 %type <str_type> SentencePart
@@ -46,88 +50,118 @@ void yyerror(char *s);
 %type <str_type> NumberSequence
 
 %%
-MainProgram: MainDeclaration '{' SubProgram '}' {
-  printf("main program\n");
+Program: MainDeclaration '{' SubProgram '}' {
+  printf("MainProgram: %s { %s }\n", $1, $3);
 }
 
 SubProgram: VarDeclarationPart ';' SentencePart {
-  printf("sub program\n");
+  printf("SubProgram: %s ; %s\n", $1, $3);
 }
 
 VarDeclarationPart: VarDeclaration IdentifierTable {
-  printf("var declaration part\n");
+  printf("VarDeclarationPart: %s %s\n", $1, $2);
 }
 
-IdentifierTable: IdentifierTable ',' Identifier | Identifier {
-  printf("identifier table\n");
+IdentifierTable: IdentifierTable ',' Identifier {
+  printf("IdentifierTable: %s , %s\n", $1, $3);
+} | Identifier {
+  printf("IdentifierTable: %s\n", $1);
 }
 
-Identifier: Letter | Identifier Letter | Identifier Number {
-  printf("Identifier\n");
+Identifier: Letter {
+  printf("Identifier: %c\n", $1);
+} | Identifier Letter {
+  printf("Identifier: %s %c\n", $1, $2);
+} | Identifier Number {
+  printf("Identifier: %s %d\n", $1, $2);
 }
 
-SentencePart: SentencePart ';' Sentence | Sentence {
-  printf("sentence part\n");
+SentencePart: SentencePart ';' Sentence {
+  printf("SentencePart: %s ; %s\n", $1, $3);
+} | Sentence {
+  printf("SentencePart: %s\n", $1);
 }
 
-Sentence: AssignSentence | ConditionSentence | LoopSentence {
-  printf("sentence\n");
+Sentence: AssignSentence {
+  printf("Sentence: %s\n", $1);
+} | ConditionSentence {
+  printf("Sentence: %s\n", $1);
+} | LoopSentence {
+  printf("Sentence: %s\n", $1);
 }
 
 AssignSentence: Identifier '=' Expression {
-  printf("assign sentence\n");
+  printf("AssignSentence: %s = %s\n", $1, $3);
 }
 
 Condition: Expression RelationOperator Expression {
-  printf("condition\n");
+  printf("Condition: %s %s %s\n", $1, $2, $3);
 }
 
-Expression: Term | Expression AddOperator Term {
-  printf("expression\n");
+Expression: Term {
+  printf("Expression: %s\n", $1);
+} | Expression AddOperator Term {
+  printf("Expression: %s %c %s\n", $1, $2, $3);
 }
 
-Term: Factor | Term MultiplyOperator Factor {
-  printf("term\n");
+Term: Factor {
+  printf("Term: %s\n", $1);
+} | Term MultiplyOperator Factor {
+  printf("Term: %s %c %s\n", $1, $2, $3);
 }
 
-Factor: Identifier | ConstValue | '(' Expression ')' {
-  printf("factor\n");
+Factor: Identifier {
+  printf("Factor: %s\n", $1);
+} | ConstValue {
+  printf("Factor: %s\n", $1);
+} | '(' Expression ')' {
+  printf("Factor: ( %s )\n", $2);
 }
 
 ConstValue: UnsignedInteger {
-  printf("const value\n");
+  printf("ConstValue: %s\n", $1);
 }
 
 UnsignedInteger: NumberSequence {
-  printf("unsigned integer\n");
+  printf("UnsignedInteger: %s\n", $1);
 }
 
-NumberSequence: NumberSequence Number | Number {
-  printf("number sequence\n");
+NumberSequence: NumberSequence Number {
+  printf("NumberSequence: %s %d\n", $1, $2);
+} | Number {
+  printf("NumberSequence: %d\n", $1);
 }
 
 ComplexSentence: '{' SentencePart '}' {
-  printf("complex sentence\n");
+  printf("ComplexSentence: { %s }\n", $2);
 }
 
-Sentence1: Sentence | ComplexSentence {
-  printf("sentence 1\n");
+Sentence1: Sentence {
+  printf("Sentence1: %s\n", $1);
+} | ComplexSentence {
+  printf("Sentence1: %s\n", $1);
 }
 
 ConditionSentence: IfStatement '(' Condition ')' Sentence1 ElseStatement Sentence1 {
-  printf("condition sentence\n");
+  printf("ConditionSentence: %s ( %s ) %s %s %s\n", $1, $3, $5, $6, $7);
 }
 
 LoopSentence: WhileStatement '(' Condition ')' DoStatement Sentence1 {
-  printf("loop statement\n");
+  printf("LoopSentence: %s ( %s ) %s %s\n", $1, $3, $5, $6);
 }
 
 %%
 
 int main(void) {
   return yyparse();
+  if (success) {
+    printf("0 warnings, 0 errors. Language accepted!\n");
+  }
+  return 0;
 }
 
-void yyerror(char *s) {
-  printf("yyerror: %s\n", s);
+int yyerror(const char *msg) {
+	printf("Error: at line: %d: %s\n", yylineno, msg);
+	success = 0;
+	return 0;
 }
