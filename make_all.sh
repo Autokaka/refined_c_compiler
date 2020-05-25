@@ -4,7 +4,7 @@ echo "\033[33m/////   Compiling...    /////\033[0m"
 echo "\033[33m/////////////////////////////\033[0m"
 echo "\033[34mRunning yacc build...\033[0m"
 yacc -d ./lib/c.y
-echo "\033[34mRunning lex build..."
+echo "\033[34mRunning lex build...\033[0m"
 lex ./lib/c.l
 echo "\033[34mRedirecting generated yacc files...\033[0m"
 mv y.tab.h ./generated/
