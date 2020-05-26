@@ -209,13 +209,9 @@ ConditionSentence: IfStatement '(' Condition ')' Sentence1 ElseStatement Sentenc
   }
 }
 
-LoopSentence: WhileStatement '(' Condition ')' Sentence1 {
+LoopSentence: WhileStatement '(' Condition ')' DoStatement Sentence1 {
   if (showStackTrace) {
     printf("↑\033[32mLoopSentence: WhileStatement '(' Condition ')' Sentence1\033[0m\n");
-  }
-} | DoStatement Sentence1 WhileStatement '(' Condition ')' ';' {
-  if (showStackTrace) {
-    printf("↑\033[32mLoopSentence: DoStatement Sentence1 WhileStatement '(' Condition ')' ';'\033[0m\n");
   }
 }
 
