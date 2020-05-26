@@ -5,6 +5,9 @@ extern int yylineno;
 int yylex(void);
 int yyerror(const char *s);
 int success = 1;
+
+// extra debug config
+int showStackTrace = 1;
 %}
 
 /* 类型 */
@@ -51,103 +54,169 @@ int success = 1;
 
 %%
 Program: MainDeclaration '{' SubProgram '}' {
-  printf("MainProgram: %s { %s }\n", $1, $3);
+  if (showStackTrace) {
+    printf("↑\033[32mProgram: MainDeclaration '{' SubProgram '}'\033[0m\n");
+  }
 }
 
 SubProgram: VarDeclarationPart ';' SentencePart {
-  printf("SubProgram: %s ; %s\n", $1, $3);
+  if (showStackTrace) {
+    printf("↑\033[32mSubProgram: VarDeclarationPart ';' SentencePart\033[0m\n");
+  }
 }
 
 VarDeclarationPart: VarDeclaration IdentifierTable {
-  printf("VarDeclarationPart: %s %s\n", $1, $2);
+  if (showStackTrace) {
+    printf("↑\033[32mVarDeclarationPart: VarDeclaration IdentifierTable\033[0m\n");
+  }
 }
 
 IdentifierTable: IdentifierTable ',' Identifier {
-  printf("IdentifierTable: %s , %s\n", $1, $3);
+  if (showStackTrace) {
+    printf("↑\033[32mIdentifierTable: IdentifierTable ',' Identifier\033[0m\n");
+  }
 } | Identifier {
-  printf("IdentifierTable: %s\n", $1);
+  if (showStackTrace) {
+    printf("↑\033[32mIdentifierTable: Identifier\033[0m\n");
+  }
 }
 
 Identifier: Letter {
-  printf("Identifier: %c\n", $1);
+  if (showStackTrace) {
+    printf("↑\033[32mIdentifier: Letter\033[0m\n");
+  }
 } | Identifier Letter {
-  printf("Identifier: %s %c\n", $1, $2);
+  if (showStackTrace) {
+    printf("↑\033[32mIdentifier: Identifier Letter\033[0m\n");
+  }
 } | Identifier Number {
-  printf("Identifier: %s %d\n", $1, $2);
+  if (showStackTrace) {
+    printf("↑\033[32mIdentifier: Identifier Number\033[0m\n");
+  }
 }
 
 SentencePart: SentencePart ';' Sentence {
-  printf("SentencePart: %s ; %s\n", $1, $3);
+  if (showStackTrace) {
+    printf("↑\033[32mSentencePart: SentencePart ';' Sentence\033[0m\n");
+  }
 } | Sentence {
-  printf("SentencePart: %s\n", $1);
+  if (showStackTrace) {
+    printf("↑\033[32mSentencePart: Sentence\033[0m\n");
+  }
 }
 
 Sentence: AssignSentence {
-  printf("Sentence: %s\n", $1);
+  if (showStackTrace) {
+    printf("↑\033[32mSentence: AssignSentence\033[0m\n");
+  }
 } | ConditionSentence {
-  printf("Sentence: %s\n", $1);
+  if (showStackTrace) {
+    printf("↑\033[32mSentence: ConditionSentence\033[0m\n");
+  }
 } | LoopSentence {
-  printf("Sentence: %s\n", $1);
+  if (showStackTrace) {
+    printf("↑\033[32mSentence: LoopSentence\033[0m\n");
+  }
 }
 
 AssignSentence: Identifier '=' Expression {
-  printf("AssignSentence: %s = %s\n", $1, $3);
+  if (showStackTrace) {
+    printf("↑\033[32mAssignSentence: Identifier '=' Expression\033[0m\n");
+  }
 }
 
 Condition: Expression RelationOperator Expression {
-  printf("Condition: %s %s %s\n", $1, $2, $3);
+  if (showStackTrace) {
+    printf("↑\033[32mCondition: Expression RelationOperator Expression\033[0m\n");
+  }
 }
 
 Expression: Term {
-  printf("Expression: %s\n", $1);
+  if (showStackTrace) {
+    printf("↑\033[32mExpression: Term\033[0m\n");
+  }
 } | Expression AddOperator Term {
-  printf("Expression: %s %c %s\n", $1, $2, $3);
+  if (showStackTrace) {
+    printf("↑\033[32mExpression: Expression AddOperator Term\033[0m\n");
+  }
 }
 
 Term: Factor {
-  printf("Term: %s\n", $1);
+  if (showStackTrace) {
+    printf("↑\033[32mTerm: Factor\033[0m\n");
+  }
 } | Term MultiplyOperator Factor {
-  printf("Term: %s %c %s\n", $1, $2, $3);
+  if (showStackTrace) {
+    printf("↑\033[32mTerm: Term MultiplyOperator Factor\033[0m\n");
+  }
 }
 
 Factor: Identifier {
-  printf("Factor: %s\n", $1);
+  if (showStackTrace) {
+    printf("↑\033[32mFactor: Identifier\033[0m\n");
+  }
 } | ConstValue {
-  printf("Factor: %s\n", $1);
+  if (showStackTrace) {
+    printf("↑\033[32mFactor: ConstValue\033[0m\n");
+  }
 } | '(' Expression ')' {
-  printf("Factor: ( %s )\n", $2);
+  if (showStackTrace) {
+    printf("↑\033[32mFactor: '(' Expression ')'\033[0m\n");
+  }
 }
 
 ConstValue: UnsignedInteger {
-  printf("ConstValue: %s\n", $1);
+  if (showStackTrace) {
+    printf("↑\033[32mConstValue: UnsignedInteger\033[0m\n");
+  }
 }
 
 UnsignedInteger: NumberSequence {
-  printf("UnsignedInteger: %s\n", $1);
+  if (showStackTrace) {
+    printf("↑\033[32mUnsignedInteger: NumberSequence\033[0m\n");
+  }
 }
 
 NumberSequence: NumberSequence Number {
-  printf("NumberSequence: %s %d\n", $1, $2);
+  if (showStackTrace) {
+    printf("↑\033[32mNumberSequence: NumberSequence Number\033[0m\n");
+  }
 } | Number {
-  printf("NumberSequence: %d\n", $1);
+  if (showStackTrace) {
+    printf("↑\033[32mNumberSequence: Number\033[0m\n");
+  }
 }
 
 ComplexSentence: '{' SentencePart '}' {
-  printf("ComplexSentence: { %s }\n", $2);
+  if (showStackTrace) {
+    printf("↑\033[32mComplexSentence: '{' SentencePart '}'\033[0m\n");
+  }
 }
 
 Sentence1: Sentence {
-  printf("Sentence1: %s\n", $1);
+  if (showStackTrace) {
+    printf("↑\033[32mSentence1: Sentence\033[0m\n");
+  }
 } | ComplexSentence {
-  printf("Sentence1: %s\n", $1);
+  if (showStackTrace) {
+    printf("↑\033[32mSentence1: ComplexSentence\033[0m\n");
+  }
 }
 
 ConditionSentence: IfStatement '(' Condition ')' Sentence1 ElseStatement Sentence1 {
-  printf("ConditionSentence: %s ( %s ) %s %s %s\n", $1, $3, $5, $6, $7);
+  if (showStackTrace) {
+    printf("↑\033[32mConditionSentence: IfStatement '(' Condition ')' Sentence1 ElseStatement Sentence1\033[0m\n");
+  }
 }
 
-LoopSentence: WhileStatement '(' Condition ')' DoStatement Sentence1 {
-  printf("LoopSentence: %s ( %s ) %s %s\n", $1, $3, $5, $6);
+LoopSentence: WhileStatement '(' Condition ')' Sentence1 {
+  if (showStackTrace) {
+    printf("↑\033[32mLoopSentence: WhileStatement '(' Condition ')' Sentence1\033[0m\n");
+  }
+} | DoStatement Sentence1 WhileStatement '(' Condition ')' ';' {
+  if (showStackTrace) {
+    printf("↑\033[32mLoopSentence: DoStatement Sentence1 WhileStatement '(' Condition ')' ';'\033[0m\n");
+  }
 }
 
 %%
@@ -161,7 +230,7 @@ int main(void) {
 }
 
 int yyerror(const char *msg) {
-	printf("Error: at line: %d: %s\n", yylineno, msg);
+	fprintf(stderr, "Error: at line: %d: %s\n", yylineno, msg);
 	success = 0;
 	return 0;
 }
