@@ -4,13 +4,14 @@ main() {
   b = 5;
   while (a > 0) 
   do {
-      b = a + b * a;
-      a = a - 1;
+    b = a + b * a;
+    a = a - 1;
   };
   x = a + b;
   y = b + b;
-  if (x > y)
+  if (x > y) {
     max = x;
-  else
+  } else {
     max = y;
+  }
 }
