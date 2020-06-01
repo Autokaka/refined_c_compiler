@@ -1,6 +1,6 @@
 %{
 #include <stdio.h>
-#include "y.tab.h"
+#include "c.tab.h"
 %}
 
 %%
@@ -73,7 +73,7 @@
 }
 
 . {
-  printf("unexpected charactor: %c\n", yytext[0]);
+  printf("\033[31munexpected charactor: %c\033[0m\n", yytext[0]);
 }
 %%
 

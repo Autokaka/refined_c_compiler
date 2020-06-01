@@ -1,13 +1,13 @@
 %{
 #include <stdio.h>
 #include <math.h>
-extern int yylineno;
+#include <string.h>
 int yylex(void);
 int yyerror(const char *s);
 int success = 1;
 
 // extra debug config
-int showStackTrace = 0;
+int showStackTrace = 1;
 %}
 
 /* 类型 */
@@ -36,17 +36,21 @@ int showStackTrace = 0;
 %type <str_type> SubProgram
 %type <str_type> VarDeclarationPart 
 %type <str_type> SentencePart
+%type <str_type> SubSentencePart
 %type <str_type> Sentence
 %type <str_type> Sentence1
 %type <str_type> ComplexSentence
 %type <str_type> IdentifierTable
+%type <str_type> SubIdentifierTable
 %type <str_type> Identifier
 %type <str_type> AssignSentence
 %type <str_type> ConditionSentence
 %type <str_type> LoopSentence
 %type <str_type> Expression
+%type <str_type> SubExpression
 %type <str_type> Condition
 %type <str_type> Term
+%type <str_type> SubTerm
 %type <str_type> Factor
 %type <str_type> ConstValue
 %type <str_type> UnsignedInteger
@@ -71,13 +75,19 @@ VarDeclarationPart: VarDeclaration IdentifierTable {
   }
 }
 
-IdentifierTable: IdentifierTable ',' Identifier {
+IdentifierTable: Identifier SubIdentifierTable {
   if (showStackTrace) {
-    printf("↑\033[32mIdentifierTable: IdentifierTable ',' Identifier\033[0m\n");
+    printf("↑\033[32mIdentifierTable: Identifier SubIdentifierTable\033[0m\n");
   }
-} | Identifier {
+}
+
+SubIdentifierTable: ',' Identifier SubIdentifierTable {
   if (showStackTrace) {
-    printf("↑\033[32mIdentifierTable: Identifier\033[0m\n");
+    printf("↑\033[32mSubIdentifierTable: ',' Identifier SubIdentifierTable\033[0m\n");
+  }
+} | {
+  if (showStackTrace) {
+    printf("↑\033[32mSubIdentifierTable: ε\033[0m\n");
   }
 }
 
@@ -95,13 +105,19 @@ Identifier: Letter {
   }
 }
 
-SentencePart: SentencePart ';' Sentence {
+SentencePart: Sentence SubSentencePart {
   if (showStackTrace) {
-    printf("↑\033[32mSentencePart: SentencePart ';' Sentence\033[0m\n");
+    printf("↑\033[32mSentencePart: Sentence SubSentencePart\033[0m\n");
   }
-} | Sentence {
+}
+
+SubSentencePart: ';' Sentence SubSentencePart {
   if (showStackTrace) {
-    printf("↑\033[32mSentencePart: Sentence\033[0m\n");
+    printf("↑\033[32mSubSentencePart: ';' Sentence SubSentencePart\033[0m\n");
+  }
+} | {
+  if (showStackTrace) {
+    printf("↑\033[32mSubSentencePart: ε\033[0m\n");
   }
 }
 
@@ -131,23 +147,35 @@ Condition: Expression RelationOperator Expression {
   }
 }
 
-Expression: Term {
+Expression: Term SubExpression {
   if (showStackTrace) {
-    printf("↑\033[32mExpression: Term\033[0m\n");
-  }
-} | Expression AddOperator Term {
-  if (showStackTrace) {
-    printf("↑\033[32mExpression: Expression AddOperator Term\033[0m\n");
+    printf("↑\033[32mExpression: Term SubExpression\033[0m\n");
   }
 }
 
-Term: Factor {
+SubExpression: AddOperator Term SubExpression {
   if (showStackTrace) {
-    printf("↑\033[32mTerm: Factor\033[0m\n");
+    printf("↑\033[32mSubSxpression: AddOperator Term SubSxpression\033[0m\n");
   }
-} | Term MultiplyOperator Factor {
+} | {
   if (showStackTrace) {
-    printf("↑\033[32mTerm: Term MultiplyOperator Factor\033[0m\n");
+    printf("↑\033[32mSubSxpression: ε\033[0m\n");
+  }
+}
+
+Term: Factor SubTerm {
+  if (showStackTrace) {
+    printf("↑\033[32mTerm: Factor SubTerm\033[0m\n");
+  }
+}
+
+SubTerm: MultiplyOperator Factor SubTerm {
+  if (showStackTrace) {
+    printf("↑\033[32mSubTerm: MultiplyOperator Factor Term\033[0m\n");
+  }
+} | {
+  if (showStackTrace) {
+    printf("↑\033[32mSubTerm: ε\033[0m\n");
   }
 }
 
@@ -225,8 +253,10 @@ int main(void) {
   return 0;
 }
 
-int yyerror(const char *msg) {
-	fprintf(stderr, "Error: at line: %d: %s\n", yylineno, msg);
+int yyerror(const char *s) {
+  extern int yylineno;
+	extern char *yytext;
+  fprintf(stderr, "\033[31mError: '%s' at line: %d: %s\033[0m\n", yytext, yylineno, s);
 	success = 0;
 	return 0;
 }
