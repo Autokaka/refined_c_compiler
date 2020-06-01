@@ -4,7 +4,7 @@
 %}
 
 %%
-"main"" "*"("" "*")" {
+"main" {
   printf("MainDeclaration: %s\n", yytext);
   return MainDeclaration;
 }

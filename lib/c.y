@@ -7,7 +7,7 @@ int yyerror(const char *s);
 int success = 1;
 
 // extra debug config
-int showStackTrace = 1;
+int showStackTrace = 0;
 %}
 
 /* 类型 */
@@ -53,7 +53,7 @@ int showStackTrace = 1;
 %type <str_type> NumberSequence
 
 %%
-Program: MainDeclaration '{' SubProgram '}' {
+Program: MainDeclaration '(' ')' '{' SubProgram '}' {
   if (showStackTrace) {
     printf("↑\033[32mProgram: MainDeclaration '{' SubProgram '}'\033[0m\n");
   }
