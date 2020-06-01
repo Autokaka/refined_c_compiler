@@ -4,10 +4,9 @@
 #include <string.h>
 int yylex(void);
 int yyerror(const char *s);
-int success = 1;
 
 // extra debug config
-int showStackTrace = 1;
+int showStackTrace = 0;
 %}
 
 /* 类型 */
@@ -66,6 +65,10 @@ Program: MainDeclaration '(' ')' '{' SubProgram '}' {
 SubProgram: VarDeclarationPart ';' SentencePart {
   if (showStackTrace) {
     printf("↑\033[32mSubProgram: VarDeclarationPart ';' SentencePart\033[0m\n");
+  }
+} | {
+  if (showStackTrace) {
+    printf("↑\033[32mSubProgram: ε\033[0m\n");
   }
 }
 
@@ -132,6 +135,10 @@ Sentence: AssignSentence {
 } | LoopSentence {
   if (showStackTrace) {
     printf("↑\033[32mSentence: LoopSentence\033[0m\n");
+  }
+} | {
+  if (showStackTrace) {
+    printf("↑\033[32mSentence: ε\033[0m\n");
   }
 }
 
@@ -246,17 +253,22 @@ LoopSentence: WhileStatement '(' Condition ')' DoStatement Sentence1 {
 %%
 
 int main(void) {
-  return yyparse();
-  if (success) {
-    printf("0 warnings, 0 errors. Language accepted!\n");
+  int hasError = yyparse();
+  if (hasError) {
+    printf("\033[31m///////////////////////////////////////////////////////\033[0m\n");
+    printf("\033[31m///////  parse failed: terminated with errors.  ///////\033[0m\n");
+    printf("\033[31m///////////////////////////////////////////////////////\033[0m\n");
+  } else {
+    printf("\033[32m//////////////////////////////////////////////////////////\033[0m\n");
+    printf("\033[32m///////  0 warnings, 0 errors. Language accepted!  ///////\033[0m\n");
+    printf("\033[32m//////////////////////////////////////////////////////////\033[0m\n");
+    return 0;
   }
-  return 0;
 }
 
 int yyerror(const char *s) {
   extern int yylineno;
 	extern char *yytext;
   fprintf(stderr, "\033[31mError: '%s' at line: %d: %s\033[0m\n", yytext, yylineno, s);
-	success = 0;
-	return 0;
+	return 1;
 }
