@@ -54,6 +54,7 @@ int showStackTrace = 0;
 %type <str_type> ConstValue
 %type <str_type> UnsignedInteger
 %type <str_type> NumberSequence
+%type <str_type> SubNumberSequence
 
 %%
 Program: MainDeclaration '(' ')' '{' SubProgram '}' {
@@ -212,13 +213,19 @@ UnsignedInteger: NumberSequence {
   }
 }
 
-NumberSequence: NumberSequence Number {
+NumberSequence: Number SubNumberSequence {
   if (showStackTrace) {
-    printf("↑\033[32mNumberSequence: NumberSequence Number\033[0m\n");
+    printf("↑\033[32mNumberSequence: Number SubNumberSequence\033[0m\n");
   }
-} | Number {
+}
+
+SubNumberSequence: Number SubNumberSequence {
   if (showStackTrace) {
-    printf("↑\033[32mNumberSequence: Number\033[0m\n");
+    printf("↑\033[32mSubNumberSequence: Number SubNumberSequence\033[0m\n");
+  }
+} | {
+  if (showStackTrace) {
+    printf("↑\033[32mSubNumberSequence: ε\033[0m\n");
   }
 }
 
