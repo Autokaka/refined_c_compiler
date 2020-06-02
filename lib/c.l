@@ -1,68 +1,82 @@
 %{
 #include <stdio.h>
 #include "c.tab.h"
+void buildWordAnalysisTable(float);
+void printAnalysedWord(float);
 %}
 
 %%
 "main" {
-  printf("MainDeclaration: %s\n", yytext);
+  printAnalysedWord(1);
+  buildWordAnalysisTable(1);
   return MainDeclaration;
 }
 
 "int" {
-  printf("VarDeclaration: %s\n", yytext);
+  printAnalysedWord(2);
+  buildWordAnalysisTable(2);
   return VarDeclaration;
 }
 
 "<"|">"|"!="|">="|"<="|"==" {
-  printf("RelationOperator: %s\n", yytext);
+  printAnalysedWord(3);
+  buildWordAnalysisTable(3);
   return RelationOperator;
 }
 
 "if" {
-  printf("IfStatement: %s\n", yytext);
+  printAnalysedWord(4);
+  buildWordAnalysisTable(4);
   return IfStatement;
 }
 
 "else" {
-  printf("ElseStatement: %s\n", yytext);
+  printAnalysedWord(5);
+  buildWordAnalysisTable(5);
   return ElseStatement;
 }
 
 "while" {
-  printf("WhileStatement: %s\n", yytext);
+  printAnalysedWord(6);
+  buildWordAnalysisTable(6);
   return WhileStatement;
 }
 
 "do" {
-  printf("DoStatement: %s\n", yytext);
+  printAnalysedWord(7);
+  buildWordAnalysisTable(7);
   return DoStatement;
 }
 
 "+"|"-" {
-  printf("AddOperator: %c\n", yytext[0]);
+  printAnalysedWord(8);
+  buildWordAnalysisTable(8);
   return AddOperator;
 }
 
 "*"|"/" {
-  printf("MultiplyOperator: %c\n", yytext[0]);
+  printAnalysedWord(9);
+  buildWordAnalysisTable(9);
   return MultiplyOperator;
 }
 
 [a-zA-Z] {
-  printf("Letter: %c\n", yytext[0]);
+  printAnalysedWord(10);
+  buildWordAnalysisTable(10);
   yylval.char_type = yytext[0];
   return Letter;
 }
 
 [0-9] {
-  printf("Number: %d\n", atoi(yytext));
+  printAnalysedWord(11);
+  buildWordAnalysisTable(11);
   yylval.int_type = atoi(yytext);
   return Number;
 }
 
 ","|";"|"="|"{"|"}"|"("|")" {
-  printf("NormalSymbol: %c\n", yytext[0]);
+  printAnalysedWord(12);
+  buildWordAnalysisTable(12);
   return yytext[0];
 }
 
@@ -79,4 +93,15 @@
 
 int yywrap(void) {
   return 1;
+}
+
+void buildWordAnalysisTable(float typeCode) {
+  FILE* fp;
+  fp = fopen("build/word_analysis_result", "a");
+  fprintf(fp, "|%-5d|%-5s|%-5.1f|\n", yylineno, yytext, typeCode);
+  fclose(fp);
+}
+
+void printAnalysedWord(float typeCode) {
+  printf("|%-5d|%-5s|%-5.1f|\n", yylineno, yytext, typeCode);
 }
