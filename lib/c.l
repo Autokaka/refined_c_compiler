@@ -3,6 +3,9 @@
 #include "c.tab.h"
 void buildWordAnalysisTable(float);
 void printAnalysedWord(float);
+
+// extra configs
+int showDebugPrint = 0;
 %}
 
 %%
@@ -103,5 +106,6 @@ void buildWordAnalysisTable(float typeCode) {
 }
 
 void printAnalysedWord(float typeCode) {
+  if (!showDebugPrint) return;
   printf("|%-5d|%-5s|%-5.1f|\n", yylineno, yytext, typeCode);
 }
