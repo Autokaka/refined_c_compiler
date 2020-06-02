@@ -1,19 +1,21 @@
 %{
 #include <stdio.h>
 #include <math.h>
-#include <string.h>
 int yylex(void);
 int yyerror(const char *s);
 
-// extra debug config
-int showStackTrace = 0;
+void buildGrammarAnalysisStack(const char *);
+void printDerivation(const char *);
+
+// extra debug configs
+int showStackTrace = 1;
 %}
 
 /* 类型 */
 %union {
   int int_type; 
   char char_type;
-  char* str_type;
+  char *str_type;
 }
 
 /* 终结符 */
@@ -58,203 +60,203 @@ int showStackTrace = 0;
 
 %%
 Program: MainDeclaration '(' ')' '{' SubProgram '}' {
-  if (showStackTrace) {
-    printf("↑\033[32mProgram: MainDeclaration '{' SubProgram '}'\033[0m\n");
-  }
+  char *str = "Program => MainDeclaration { SubProgram }";
+  buildGrammarAnalysisStack(str);
+  printDerivation(str);
 }
 
 SubProgram: VarDeclarationPart ';' SentencePart {
-  if (showStackTrace) {
-    printf("↑\033[32mSubProgram: VarDeclarationPart ';' SentencePart\033[0m\n");
-  }
+  char *str = "SubProgram => VarDeclarationPart ; SentencePart";
+  buildGrammarAnalysisStack(str);
+  printDerivation(str);
 } | {
-  if (showStackTrace) {
-    printf("↑\033[32mSubProgram: ε\033[0m\n");
-  }
+  char *str = "SubProgram => ε";
+  buildGrammarAnalysisStack(str);
+  printDerivation(str);
 }
 
 VarDeclarationPart: VarDeclaration IdentifierTable {
-  if (showStackTrace) {
-    printf("↑\033[32mVarDeclarationPart: VarDeclaration IdentifierTable\033[0m\n");
-  }
+  char *str = "VarDeclarationPart => VarDeclaration IdentifierTable";
+  buildGrammarAnalysisStack(str);
+  printDerivation(str);
 }
 
 IdentifierTable: Identifier SubIdentifierTable {
-  if (showStackTrace) {
-    printf("↑\033[32mIdentifierTable: Identifier SubIdentifierTable\033[0m\n");
-  }
+  char *str = "IdentifierTable => Identifier SubIdentifierTable";
+  buildGrammarAnalysisStack(str);
+  printDerivation(str);
 }
 
 SubIdentifierTable: ',' Identifier SubIdentifierTable {
-  if (showStackTrace) {
-    printf("↑\033[32mSubIdentifierTable: ',' Identifier SubIdentifierTable\033[0m\n");
-  }
+  char *str = "SubIdentifierTable => , Identifier SubIdentifierTable";
+  buildGrammarAnalysisStack(str);
+  printDerivation(str);
 } | {
-  if (showStackTrace) {
-    printf("↑\033[32mSubIdentifierTable: ε\033[0m\n");
-  }
+  char *str = "SubIdentifierTable => ε";
+  buildGrammarAnalysisStack(str);
+  printDerivation(str);
 }
 
 Identifier: Letter {
-  if (showStackTrace) {
-    printf("↑\033[32mIdentifier: Letter\033[0m\n");
-  }
+  char *str = "Identifier => Letter";
+  buildGrammarAnalysisStack(str);
+  printDerivation(str);
 } | Identifier Letter {
-  if (showStackTrace) {
-    printf("↑\033[32mIdentifier: Identifier Letter\033[0m\n");
-  }
+  char *str = "Identifier => Identifier Letter";
+  buildGrammarAnalysisStack(str);
+  printDerivation(str);
 } | Identifier Number {
-  if (showStackTrace) {
-    printf("↑\033[32mIdentifier: Identifier Number\033[0m\n");
-  }
+  char *str = "Identifier => Identifier Number";
+  buildGrammarAnalysisStack(str);
+  printDerivation(str);
 }
 
 SentencePart: Sentence SubSentencePart {
-  if (showStackTrace) {
-    printf("↑\033[32mSentencePart: Sentence SubSentencePart\033[0m\n");
-  }
+  char *str = "SentencePart => Sentence SubSentencePart";
+  buildGrammarAnalysisStack(str);
+  printDerivation(str);
 }
 
 SubSentencePart: ';' Sentence SubSentencePart {
-  if (showStackTrace) {
-    printf("↑\033[32mSubSentencePart: ';' Sentence SubSentencePart\033[0m\n");
-  }
+  char *str = "SubSentencePart => ; Sentence SubSentencePart";
+  buildGrammarAnalysisStack(str);
+  printDerivation(str);
 } | {
-  if (showStackTrace) {
-    printf("↑\033[32mSubSentencePart: ε\033[0m\n");
-  }
+  char *str = "SubSentencePart => ε";
+  buildGrammarAnalysisStack(str);
+  printDerivation(str);
 }
 
 Sentence: AssignSentence {
-  if (showStackTrace) {
-    printf("↑\033[32mSentence: AssignSentence\033[0m\n");
-  }
+  char *str = "Sentence => AssignSentence";
+  buildGrammarAnalysisStack(str);
+  printDerivation(str);
 } | ConditionSentence {
-  if (showStackTrace) {
-    printf("↑\033[32mSentence: ConditionSentence\033[0m\n");
-  }
+  char *str = "Sentence => ConditionSentence";
+  buildGrammarAnalysisStack(str);
+  printDerivation(str);
 } | LoopSentence {
-  if (showStackTrace) {
-    printf("↑\033[32mSentence: LoopSentence\033[0m\n");
-  }
+  char *str = "Sentence => LoopSentence";
+  buildGrammarAnalysisStack(str);
+  printDerivation(str);
 } | {
-  if (showStackTrace) {
-    printf("↑\033[32mSentence: ε\033[0m\n");
-  }
+  char *str = "Sentence => ε";
+  buildGrammarAnalysisStack(str);
+  printDerivation(str);
 }
 
 AssignSentence: Identifier '=' Expression {
-  if (showStackTrace) {
-    printf("↑\033[32mAssignSentence: Identifier '=' Expression\033[0m\n");
-  }
+  char *str = "AssignSentence => Identifier = Expression";
+  buildGrammarAnalysisStack(str);
+  printDerivation(str);
 }
 
 Condition: Expression RelationOperator Expression {
-  if (showStackTrace) {
-    printf("↑\033[32mCondition: Expression RelationOperator Expression\033[0m\n");
-  }
+  char *str = "Condition => Expression RelationOperator Expression";
+  buildGrammarAnalysisStack(str);
+  printDerivation(str);
 }
 
 Expression: Term SubExpression {
-  if (showStackTrace) {
-    printf("↑\033[32mExpression: Term SubExpression\033[0m\n");
-  }
+  char *str = "Expression => Term SubExpression";
+  buildGrammarAnalysisStack(str);
+  printDerivation(str);
 }
 
 SubExpression: AddOperator Term SubExpression {
-  if (showStackTrace) {
-    printf("↑\033[32mSubSxpression: AddOperator Term SubSxpression\033[0m\n");
-  }
+  char *str = "SubSxpression => AddOperator Term SubSxpression";
+  buildGrammarAnalysisStack(str);
+  printDerivation(str);
 } | {
-  if (showStackTrace) {
-    printf("↑\033[32mSubSxpression: ε\033[0m\n");
-  }
+  char *str = "SubSxpression => ε";
+  buildGrammarAnalysisStack(str);
+  printDerivation(str);
 }
 
 Term: Factor SubTerm {
-  if (showStackTrace) {
-    printf("↑\033[32mTerm: Factor SubTerm\033[0m\n");
-  }
+  char *str = "Term => Factor SubTerm";
+  buildGrammarAnalysisStack(str);
+  printDerivation(str);
 }
 
 SubTerm: MultiplyOperator Factor SubTerm {
-  if (showStackTrace) {
-    printf("↑\033[32mSubTerm: MultiplyOperator Factor Term\033[0m\n");
-  }
+  char *str = "SubTerm => MultiplyOperator Factor Term";
+  buildGrammarAnalysisStack(str);
+  printDerivation(str);
 } | {
-  if (showStackTrace) {
-    printf("↑\033[32mSubTerm: ε\033[0m\n");
-  }
+  char *str = "SubTerm => ε";
+  buildGrammarAnalysisStack(str);
+  printDerivation(str);
 }
 
 Factor: Identifier {
-  if (showStackTrace) {
-    printf("↑\033[32mFactor: Identifier\033[0m\n");
-  }
+  char *str = "Factor => Identifier";
+  buildGrammarAnalysisStack(str);
+  printDerivation(str);
 } | ConstValue {
-  if (showStackTrace) {
-    printf("↑\033[32mFactor: ConstValue\033[0m\n");
-  }
+  char *str = "Factor => ConstValue";
+  buildGrammarAnalysisStack(str);
+  printDerivation(str);
 } | '(' Expression ')' {
-  if (showStackTrace) {
-    printf("↑\033[32mFactor: '(' Expression ')'\033[0m\n");
-  }
+  char *str = "Factor => ( Expression )";
+  buildGrammarAnalysisStack(str);
+  printDerivation(str);
 }
 
 ConstValue: UnsignedInteger {
-  if (showStackTrace) {
-    printf("↑\033[32mConstValue: UnsignedInteger\033[0m\n");
-  }
+  char *str = "ConstValue => UnsignedInteger";
+  buildGrammarAnalysisStack(str);
+  printDerivation(str);
 }
 
 UnsignedInteger: NumberSequence {
-  if (showStackTrace) {
-    printf("↑\033[32mUnsignedInteger: NumberSequence\033[0m\n");
-  }
+  char *str = "UnsignedInteger => NumberSequence";
+  buildGrammarAnalysisStack(str);
+  printDerivation(str);
 }
 
 NumberSequence: Number SubNumberSequence {
-  if (showStackTrace) {
-    printf("↑\033[32mNumberSequence: Number SubNumberSequence\033[0m\n");
-  }
+  char *str = "NumberSequence => Number SubNumberSequence";
+  buildGrammarAnalysisStack(str);
+  printDerivation(str);
 }
 
 SubNumberSequence: Number SubNumberSequence {
-  if (showStackTrace) {
-    printf("↑\033[32mSubNumberSequence: Number SubNumberSequence\033[0m\n");
-  }
+  char *str = "SubNumberSequence => Number SubNumberSequence";
+  buildGrammarAnalysisStack(str);
+  printDerivation(str);
 } | {
-  if (showStackTrace) {
-    printf("↑\033[32mSubNumberSequence: ε\033[0m\n");
-  }
+  char *str = "SubNumberSequence => ε";
+  buildGrammarAnalysisStack(str);
+  printDerivation(str);
 }
 
 ComplexSentence: '{' SentencePart '}' {
-  if (showStackTrace) {
-    printf("↑\033[32mComplexSentence: '{' SentencePart '}'\033[0m\n");
-  }
+  char *str = "ComplexSentence => { SentencePart }";
+  buildGrammarAnalysisStack(str);
+  printDerivation(str);
 }
 
 Sentence1: Sentence {
-  if (showStackTrace) {
-    printf("↑\033[32mSentence1: Sentence\033[0m\n");
-  }
+  char *str = "Sentence1 => Sentence";
+  buildGrammarAnalysisStack(str);
+  printDerivation(str);
 } | ComplexSentence {
-  if (showStackTrace) {
-    printf("↑\033[32mSentence1: ComplexSentence\033[0m\n");
-  }
+  char *str = "Sentence1 => ComplexSentence";
+  buildGrammarAnalysisStack(str);
+  printDerivation(str);
 }
 
 ConditionSentence: IfStatement '(' Condition ')' Sentence1 ElseStatement Sentence1 {
-  if (showStackTrace) {
-    printf("↑\033[32mConditionSentence: IfStatement '(' Condition ')' Sentence1 ElseStatement Sentence1\033[0m\n");
-  }
+  char *str = "ConditionSentence => IfStatement ( Condition ) Sentence1 ElseStatement Sentence1";
+  buildGrammarAnalysisStack(str);
+  printDerivation(str);
 }
 
 LoopSentence: WhileStatement '(' Condition ')' DoStatement Sentence1 {
-  if (showStackTrace) {
-    printf("↑\033[32mLoopSentence: WhileStatement '(' Condition ')' Sentence1\033[0m\n");
-  }
+  char *str = "LoopSentence => WhileStatement ( Condition ) Sentence1";
+  buildGrammarAnalysisStack(str);
+  printDerivation(str);
 }
 
 %%
@@ -278,4 +280,16 @@ int yyerror(const char *s) {
 	extern char *yytext;
   fprintf(stderr, "\033[31mError: '%s' at line: %d: %s\033[0m\n", yytext, yylineno, s);
 	return 1;
+}
+
+void buildGrammarAnalysisStack(const char *str) {
+  FILE* fp;
+  fp = fopen("build/grammar_analysis_stack", "a");
+  fprintf(fp, "%s\n", str);
+  fclose(fp);
+}
+
+void printDerivation(const char *str) {
+  if (!showStackTrace) return;
+  printf("%s\n", str);
 }
