@@ -5,7 +5,7 @@ void buildWordAnalysisTable(float);
 void printAnalysedWord(float);
 
 // extra configs
-int showDebugPrint = 0;
+int showWordPrint = 1;
 %}
 
 %%
@@ -100,12 +100,12 @@ int yywrap(void) {
 
 void buildWordAnalysisTable(float typeCode) {
   FILE* fp;
-  fp = fopen("build/word_analysis_result", "a");
-  fprintf(fp, "|%-5d|%-5s|%-5.1f|\n", yylineno, yytext, typeCode);
+  fp = fopen("build/word_analysis_table", "a");
+  fprintf(fp, "|%-8d|%-8s|%-8.1f|\n", yylineno, yytext, typeCode);
   fclose(fp);
 }
 
 void printAnalysedWord(float typeCode) {
-  if (!showDebugPrint) return;
-  printf("|%-5d|%-5s|%-5.1f|\n", yylineno, yytext, typeCode);
+  if (!showWordPrint) return;
+  printf("|%-8d|%-8s|%-8.1f|\n", yylineno, yytext, typeCode);
 }
