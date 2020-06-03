@@ -2,88 +2,100 @@
 #include <stdio.h>
 #include "c.tab.h"
 void buildWordAnalysisTable(float);
-void printAnalysedWord(float);
+void printWordAnalysis(float);
 
 // extra configs
-int showWordPrint = 1;
+int showWordAnalysis = 0;
 %}
 
 %%
 "main" {
-  printAnalysedWord(1);
+  printWordAnalysis(1);
   buildWordAnalysisTable(1);
+  yylval.str_type = strdup(yytext);
   return MainDeclaration;
 }
 
 "int" {
-  printAnalysedWord(2);
+  printWordAnalysis(2);
   buildWordAnalysisTable(2);
+  yylval.str_type = strdup(yytext);
   return VarDeclaration;
 }
 
 "<"|">"|"!="|">="|"<="|"==" {
-  printAnalysedWord(3);
+  printWordAnalysis(3);
   buildWordAnalysisTable(3);
+  yylval.str_type = strdup(yytext);
   return RelationOperator;
 }
 
 "if" {
-  printAnalysedWord(4);
+  printWordAnalysis(4);
   buildWordAnalysisTable(4);
+  yylval.str_type = strdup(yytext);
   return IfStatement;
 }
 
 "else" {
-  printAnalysedWord(5);
+  printWordAnalysis(5);
   buildWordAnalysisTable(5);
+  yylval.str_type = strdup(yytext);
   return ElseStatement;
 }
 
 "while" {
-  printAnalysedWord(6);
+  printWordAnalysis(6);
   buildWordAnalysisTable(6);
+  yylval.str_type = strdup(yytext);
   return WhileStatement;
 }
 
 "do" {
-  printAnalysedWord(7);
+  printWordAnalysis(7);
   buildWordAnalysisTable(7);
+  yylval.str_type = strdup(yytext);
   return DoStatement;
 }
 
 "+"|"-" {
-  printAnalysedWord(8);
+  printWordAnalysis(8);
   buildWordAnalysisTable(8);
+  yylval.char_type = yytext[0];
   return AddOperator;
 }
 
 "*"|"/" {
-  printAnalysedWord(9);
+  printWordAnalysis(9);
   buildWordAnalysisTable(9);
+  yylval.char_type = yytext[0];
   return MultiplyOperator;
 }
 
 [a-zA-Z] {
-  printAnalysedWord(10);
+  printWordAnalysis(10);
   buildWordAnalysisTable(10);
   yylval.char_type = yytext[0];
   return Letter;
 }
 
 [0-9] {
-  printAnalysedWord(11);
+  printWordAnalysis(11);
   buildWordAnalysisTable(11);
   yylval.int_type = atoi(yytext);
   return Number;
 }
 
 ","|";"|"="|"{"|"}"|"("|")" {
-  printAnalysedWord(12);
+  printWordAnalysis(12);
   buildWordAnalysisTable(12);
+  yylval.char_type = yytext[0];
   return yytext[0];
 }
 
-[ \t\f\v] {/* ignore symbols */}
+[ \t\f\v] {
+  /* ignore symbols */
+}
 
 [\n\r] {
   yylineno++;
@@ -91,6 +103,7 @@ int showWordPrint = 1;
 
 . {
   printf("\033[31munexpected charactor: %c\033[0m\n", yytext[0]);
+  yylval.char_type = yytext[0];
 }
 %%
 
@@ -105,7 +118,7 @@ void buildWordAnalysisTable(float typeCode) {
   fclose(fp);
 }
 
-void printAnalysedWord(float typeCode) {
-  if (!showWordPrint) return;
+void printWordAnalysis(float typeCode) {
+  if (!showWordAnalysis) return;
   printf("|%-8d|%-8s|%-8.1f|\n", yylineno, yytext, typeCode);
 }
