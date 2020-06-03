@@ -3,3 +3,4 @@ echo "\033[33m///////////////////////////////\033[0m"
 echo "\033[33m/////   Running demo...   /////\033[0m"
 echo "\033[33m///////////////////////////////\033[0m"
 ./build/runner < ./example/accepted_demo
+# ./build/runner < ./example/failed_demo
