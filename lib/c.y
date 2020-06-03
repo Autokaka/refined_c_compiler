@@ -1,14 +1,27 @@
 %{
 #include <stdio.h>
 #include <math.h>
+#include <string.h>
+
+extern int yylineno;
+extern char *yytext;
+
 int yylex(void);
 int yyerror(const char *s);
 
 void buildGrammarAnalysisStack(const char *);
-void printDerivation(const char *);
+void printGrammarAnalysis(const char *);
+
+void buildSemanticAnalysisTable(const char *, const char *, const char *, const char *);
+void printSemanticAnalysis(const char *, const char *, const char *, const char *);
+
+char* itoa(int);
+char* ctoa(char);
 
 // extra debug configs
-int showStackTrace = 1;
+int showGrammarAnalysis = 0;
+int showSemanticAnalysis = 1;
+int bufferSize = 1024;
 %}
 
 /* 类型 */
@@ -17,6 +30,10 @@ int showStackTrace = 1;
   char char_type;
   char *str_type;
 }
+
+/* 优先级 */
+%left '+' '-'
+%left '*' '/'
 
 /* 终结符 */
 %token <str_type>   MainDeclaration     // main()
@@ -60,203 +77,353 @@ int showStackTrace = 1;
 
 %%
 Program: MainDeclaration '(' ')' '{' SubProgram '}' {
+  char s[bufferSize];
+  sprintf(s, "%s(){%s}", $1, $5);
+  $$ = strdup(s);
+
   char *str = "Program => MainDeclaration { SubProgram }";
   buildGrammarAnalysisStack(str);
-  printDerivation(str);
+  printGrammarAnalysis(str);
 }
 
 SubProgram: VarDeclarationPart ';' SentencePart {
+  char s[bufferSize];
+  sprintf(s, "%s;%s", $1, $3);
+  $$ = strdup(s);
+
   char *str = "SubProgram => VarDeclarationPart ; SentencePart";
   buildGrammarAnalysisStack(str);
-  printDerivation(str);
+  printGrammarAnalysis(str);
 } | {
+  $$ = strdup("");
+
   char *str = "SubProgram => ε";
   buildGrammarAnalysisStack(str);
-  printDerivation(str);
+  printGrammarAnalysis(str);
 }
 
 VarDeclarationPart: VarDeclaration IdentifierTable {
+  char s[bufferSize];
+  sprintf(s, "%s%s", $1, $2);
+  $$ = strdup(s);
+
   char *str = "VarDeclarationPart => VarDeclaration IdentifierTable";
   buildGrammarAnalysisStack(str);
-  printDerivation(str);
+  printGrammarAnalysis(str);
 }
 
 IdentifierTable: Identifier SubIdentifierTable {
+  char s[bufferSize];
+  sprintf(s, "%s%s", $1, $2);
+  $$ = strdup(s);
+
   char *str = "IdentifierTable => Identifier SubIdentifierTable";
   buildGrammarAnalysisStack(str);
-  printDerivation(str);
+  printGrammarAnalysis(str);
 }
 
 SubIdentifierTable: ',' Identifier SubIdentifierTable {
+  char s[bufferSize];
+  sprintf(s, ",%s%s", $2, $3);
+  $$ = strdup(s);
+
   char *str = "SubIdentifierTable => , Identifier SubIdentifierTable";
   buildGrammarAnalysisStack(str);
-  printDerivation(str);
+  printGrammarAnalysis(str);
 } | {
+  $$ = strdup("");
+
   char *str = "SubIdentifierTable => ε";
   buildGrammarAnalysisStack(str);
-  printDerivation(str);
+  printGrammarAnalysis(str);
 }
 
 Identifier: Letter {
+  char s[bufferSize];
+  sprintf(s, "%c", $1);
+  $$ = strdup(s);
+
   char *str = "Identifier => Letter";
   buildGrammarAnalysisStack(str);
-  printDerivation(str);
+  printGrammarAnalysis(str);
 } | Identifier Letter {
+  char s[bufferSize];
+  sprintf(s, "%s%c", $1, $2);
+  $$ = strdup(s);
+
   char *str = "Identifier => Identifier Letter";
   buildGrammarAnalysisStack(str);
-  printDerivation(str);
+  printGrammarAnalysis(str);
 } | Identifier Number {
+  char s[bufferSize];
+  sprintf(s, "%s%d", $1, $2);
+  $$ = strdup(s);
+
   char *str = "Identifier => Identifier Number";
   buildGrammarAnalysisStack(str);
-  printDerivation(str);
+  printGrammarAnalysis(str);
 }
 
 SentencePart: Sentence SubSentencePart {
+  char s[bufferSize];
+  sprintf(s, "%s%s", $1, $2);
+  $$ = strdup(s);
+
   char *str = "SentencePart => Sentence SubSentencePart";
   buildGrammarAnalysisStack(str);
-  printDerivation(str);
+  printGrammarAnalysis(str);
 }
 
 SubSentencePart: ';' Sentence SubSentencePart {
+  char s[bufferSize];
+  sprintf(s, ";%s%s", $2, $3);
+  $$ = strdup(s);
+
   char *str = "SubSentencePart => ; Sentence SubSentencePart";
   buildGrammarAnalysisStack(str);
-  printDerivation(str);
+  printGrammarAnalysis(str);
 } | {
+  $$ = strdup("");
+
   char *str = "SubSentencePart => ε";
   buildGrammarAnalysisStack(str);
-  printDerivation(str);
+  printGrammarAnalysis(str);
 }
 
 Sentence: AssignSentence {
+  char s[bufferSize];
+  sprintf(s, "%s", $1);
+  $$ = strdup(s);
+
   char *str = "Sentence => AssignSentence";
   buildGrammarAnalysisStack(str);
-  printDerivation(str);
+  printGrammarAnalysis(str);
 } | ConditionSentence {
+  char s[bufferSize];
+  sprintf(s, "%s", $1);
+  $$ = strdup(s);
+
   char *str = "Sentence => ConditionSentence";
   buildGrammarAnalysisStack(str);
-  printDerivation(str);
+  printGrammarAnalysis(str);
 } | LoopSentence {
+  char s[bufferSize];
+  sprintf(s, "%s", $1);
+  $$ = strdup(s);
+
   char *str = "Sentence => LoopSentence";
   buildGrammarAnalysisStack(str);
-  printDerivation(str);
+  printGrammarAnalysis(str);
 } | {
+  $$ = strdup("");
+
   char *str = "Sentence => ε";
   buildGrammarAnalysisStack(str);
-  printDerivation(str);
+  printGrammarAnalysis(str);
 }
 
 AssignSentence: Identifier '=' Expression {
+  char s[bufferSize];
+  sprintf(s, "%s=%s", $1, $3);
+  $$ = strdup(s);
+
   char *str = "AssignSentence => Identifier = Expression";
   buildGrammarAnalysisStack(str);
-  printDerivation(str);
+  printGrammarAnalysis(str);
+
+  buildSemanticAnalysisTable("=", $3, "", $1);
+  printSemanticAnalysis("=", $3, "", $1);
 }
 
 Condition: Expression RelationOperator Expression {
+  char s[bufferSize];
+  sprintf(s, "%s%s%s", $1, $2, $3);
+  $$ = strdup(s);
+
   char *str = "Condition => Expression RelationOperator Expression";
   buildGrammarAnalysisStack(str);
-  printDerivation(str);
+  printGrammarAnalysis(str);
+
+  buildSemanticAnalysisTable($2, $1, $3, itoa(yylineno));
+  printSemanticAnalysis($2, $1, $3, itoa(yylineno));
 }
 
 Expression: Term SubExpression {
+  char s[bufferSize];
+  sprintf(s, "%s%s", $1, $2);
+  $$ = strdup(s);
+
   char *str = "Expression => Term SubExpression";
   buildGrammarAnalysisStack(str);
-  printDerivation(str);
+  printGrammarAnalysis(str);
 }
 
 SubExpression: AddOperator Term SubExpression {
+  char s[bufferSize];
+  sprintf(s, "%c%s%s", $1, $2, $3);
+  $$ = strdup(s);
+
   char *str = "SubSxpression => AddOperator Term SubSxpression";
   buildGrammarAnalysisStack(str);
-  printDerivation(str);
+  printGrammarAnalysis(str);
+
+  buildSemanticAnalysisTable(ctoa($1), $2, $3, itoa(yylineno));
+  printSemanticAnalysis(ctoa($1), $2, $3, itoa(yylineno));
 } | {
+  $$ = strdup("");
+
   char *str = "SubSxpression => ε";
   buildGrammarAnalysisStack(str);
-  printDerivation(str);
+  printGrammarAnalysis(str);
 }
 
 Term: Factor SubTerm {
+  char s[bufferSize];
+  sprintf(s, "%s%s", $1, $2);
+  $$ = strdup(s);
+
   char *str = "Term => Factor SubTerm";
   buildGrammarAnalysisStack(str);
-  printDerivation(str);
+  printGrammarAnalysis(str);
 }
 
 SubTerm: MultiplyOperator Factor SubTerm {
+  char s[bufferSize];
+  sprintf(s, "%c%s%s", $1, $2, $3);
+  $$ = strdup(s);
+
   char *str = "SubTerm => MultiplyOperator Factor Term";
   buildGrammarAnalysisStack(str);
-  printDerivation(str);
+  printGrammarAnalysis(str);
+
+  buildSemanticAnalysisTable(ctoa($1), $2, $3, itoa(yylineno));
+  printSemanticAnalysis(ctoa($1), $2, $3, itoa(yylineno));
 } | {
+  $$ = strdup("");
+
   char *str = "SubTerm => ε";
   buildGrammarAnalysisStack(str);
-  printDerivation(str);
+  printGrammarAnalysis(str);
 }
 
 Factor: Identifier {
+  char s[bufferSize];
+  sprintf(s, "%s", $1);
+  $$ = strdup(s);
+
   char *str = "Factor => Identifier";
   buildGrammarAnalysisStack(str);
-  printDerivation(str);
+  printGrammarAnalysis(str);
 } | ConstValue {
+  char s[bufferSize];
+  sprintf(s, "%s", $1);
+  $$ = strdup(s);
+
   char *str = "Factor => ConstValue";
   buildGrammarAnalysisStack(str);
-  printDerivation(str);
+  printGrammarAnalysis(str);
 } | '(' Expression ')' {
+  char s[bufferSize];
+  sprintf(s, "(%s)", $2);
+  $$ = strdup(s);
+
   char *str = "Factor => ( Expression )";
   buildGrammarAnalysisStack(str);
-  printDerivation(str);
+  printGrammarAnalysis(str);
 }
 
 ConstValue: UnsignedInteger {
+  char s[bufferSize];
+  sprintf(s, "%s", $1);
+  $$ = strdup(s);
+
   char *str = "ConstValue => UnsignedInteger";
   buildGrammarAnalysisStack(str);
-  printDerivation(str);
+  printGrammarAnalysis(str);
 }
 
 UnsignedInteger: NumberSequence {
+  char s[bufferSize];
+  sprintf(s, "%s", $1);
+  $$ = strdup(s);
+
   char *str = "UnsignedInteger => NumberSequence";
   buildGrammarAnalysisStack(str);
-  printDerivation(str);
+  printGrammarAnalysis(str);
 }
 
 NumberSequence: Number SubNumberSequence {
+  char s[bufferSize];
+  sprintf(s, "%d%s", $1, $2);
+  $$ = strdup(s);
+
   char *str = "NumberSequence => Number SubNumberSequence";
   buildGrammarAnalysisStack(str);
-  printDerivation(str);
+  printGrammarAnalysis(str);
 }
 
 SubNumberSequence: Number SubNumberSequence {
+  char s[bufferSize];
+  sprintf(s, "%d%s", $1, $2);
+  $$ = strdup(s);
+
   char *str = "SubNumberSequence => Number SubNumberSequence";
   buildGrammarAnalysisStack(str);
-  printDerivation(str);
+  printGrammarAnalysis(str);
 } | {
+  $$ = strdup("");
+
   char *str = "SubNumberSequence => ε";
   buildGrammarAnalysisStack(str);
-  printDerivation(str);
+  printGrammarAnalysis(str);
 }
 
 ComplexSentence: '{' SentencePart '}' {
+  char s[bufferSize];
+  sprintf(s, "{%s}", $2);
+  $$ = strdup(s);
+
   char *str = "ComplexSentence => { SentencePart }";
   buildGrammarAnalysisStack(str);
-  printDerivation(str);
+  printGrammarAnalysis(str);
 }
 
 Sentence1: Sentence {
+  char s[bufferSize];
+  sprintf(s, "%s", $1);
+  $$ = strdup(s);
+
   char *str = "Sentence1 => Sentence";
   buildGrammarAnalysisStack(str);
-  printDerivation(str);
+  printGrammarAnalysis(str);
 } | ComplexSentence {
+  char s[bufferSize];
+  sprintf(s, "%s", $1);
+  $$ = strdup(s);
+
   char *str = "Sentence1 => ComplexSentence";
   buildGrammarAnalysisStack(str);
-  printDerivation(str);
+  printGrammarAnalysis(str);
 }
 
 ConditionSentence: IfStatement '(' Condition ')' Sentence1 ElseStatement Sentence1 {
+  char s[bufferSize];
+  sprintf(s, "%s(%s)%s%s%s", $1, $3, $5, $6, $7);
+  $$ = strdup(s);
+
   char *str = "ConditionSentence => IfStatement ( Condition ) Sentence1 ElseStatement Sentence1";
   buildGrammarAnalysisStack(str);
-  printDerivation(str);
+  printGrammarAnalysis(str);
 }
 
 LoopSentence: WhileStatement '(' Condition ')' DoStatement Sentence1 {
+  char s[bufferSize];
+  sprintf(s, "%s(%s)%s%s", $1, $3, $5, $6);
+  $$ = strdup(s);
+
   char *str = "LoopSentence => WhileStatement ( Condition ) Sentence1";
   buildGrammarAnalysisStack(str);
-  printDerivation(str);
+  printGrammarAnalysis(str);
 }
 
 %%
@@ -276,8 +443,6 @@ int main(void) {
 }
 
 int yyerror(const char *s) {
-  extern int yylineno;
-	extern char *yytext;
   fprintf(stderr, "\033[31mError: '%s' at line: %d: %s\033[0m\n", yytext, yylineno, s);
 	return 1;
 }
@@ -289,7 +454,31 @@ void buildGrammarAnalysisStack(const char *str) {
   fclose(fp);
 }
 
-void printDerivation(const char *str) {
-  if (!showStackTrace) return;
+void printGrammarAnalysis(const char *str) {
+  if (!showGrammarAnalysis) return;
   printf("%s\n", str);
+}
+
+void buildSemanticAnalysisTable(const char *op, const char *arg1, const char *arg2, const char *res) {
+  FILE* fp;
+  fp = fopen("build/semantic_analysis_table", "a");
+  fprintf(fp, "%d: ('%s', '%s', '%s', '%s')\n", yylineno, op, arg1, arg2, res);
+  fclose(fp);
+}
+
+void printSemanticAnalysis(const char *op, const char *arg1, const char *arg2, const char *res) {
+  if (!showSemanticAnalysis) return;
+  printf("%d: ('%s', '%s', '%s', '%s')\n", yylineno, op, arg1, arg2, res);
+}
+
+char* itoa(int n) {
+  char s[bufferSize];
+  sprintf(s, "%d", n);
+  return strdup(s);
+}
+
+char* ctoa(char c) {
+  char s[bufferSize];
+  sprintf(s, "%c", c);
+  return strdup(s);
 }
