@@ -1,8 +1,8 @@
 %{
 #include <stdio.h>
 #include "c.tab.h"
-void buildWordAnalysisTable(float);
-void printWordAnalysis(float);
+void buildWordAnalysisTable(int);
+void printWordAnalysis(int);
 
 // extra configs
 int showWordAnalysis = 0;
@@ -111,14 +111,14 @@ int yywrap(void) {
   return 1;
 }
 
-void buildWordAnalysisTable(float typeCode) {
+void buildWordAnalysisTable(int typeCode) {
   FILE* fp;
   fp = fopen("build/word_analysis_table", "a");
-  fprintf(fp, "|%-8d|%-8s|%-8.1f|\n", yylineno, yytext, typeCode);
+  fprintf(fp, "|%-8d|%-8s|%-8d|\n", yylineno, yytext, typeCode);
   fclose(fp);
 }
 
-void printWordAnalysis(float typeCode) {
+void printWordAnalysis(int typeCode) {
   if (!showWordAnalysis) return;
-  printf("|%-8d|%-8s|%-8.1f|\n", yylineno, yytext, typeCode);
+  printf("|%-8d|%-8s|%-8d|\n", yylineno, yytext, typeCode);
 }
