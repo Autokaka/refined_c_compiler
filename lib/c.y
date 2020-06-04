@@ -16,6 +16,7 @@ void printGrammarAnalysis(const char *);
 
 void assembleSemanticAnalysisTable(const char *, const char *, const char *, const char *);
 void buildSemanticAnalysisTable();
+void linkQuatenaryType();
 void printSemanticAnalysis();
 void prepareSemanticAnalysis();
 char* semanticAnalysisTable[BUFFER_SIZE][5];
@@ -23,12 +24,19 @@ int semanticAnalysisP;
 char* symbols[BUFFER_SIZE];
 int symbolsP;
 
+void printIdTable();
+void buildIdTable();
+char* ids[BUFFER_SIZE];
+int idP;
+
 char* itoa(int);
 char* ctoa(char);
+int atoi(const char*);
 
 // extra debug configs
 int showGrammarAnalysis = 0;
 int showSemanticAnalysis = 0;
+int showIdTable = 1;
 %}
 
 /* 类型 */
@@ -127,6 +135,10 @@ IdentifierTable: Identifier SubIdentifierTable {
   char *str = "IdentifierTable => Identifier SubIdentifierTable";
   buildGrammarAnalysisStack(str);
   printGrammarAnalysis(str);
+
+  ids[idP++] = strdup($1);
+  printIdTable($1);
+  buildIdTable($1);
 }
 
 SubIdentifierTable: ',' Identifier SubIdentifierTable {
@@ -137,6 +149,10 @@ SubIdentifierTable: ',' Identifier SubIdentifierTable {
   char *str = "SubIdentifierTable => , Identifier SubIdentifierTable";
   buildGrammarAnalysisStack(str);
   printGrammarAnalysis(str);
+
+  ids[idP++] = strdup($2);
+  printIdTable($2);
+  buildIdTable($2);
 } | {
   $$ = strdup("");
 
@@ -250,7 +266,7 @@ Condition: Expression RelationOperator Expression {
   buildGrammarAnalysisStack(str);
   printGrammarAnalysis(str);
 
-  assembleSemanticAnalysisTable($2, $1, $3, itoa(yylineno));
+  assembleSemanticAnalysisTable($2, $1, $3, "");
 }
 
 Expression: Term SubExpression {
@@ -411,6 +427,8 @@ Sentence1: Sentence {
   char *str = "Sentence1 => ComplexSentence";
   buildGrammarAnalysisStack(str);
   printGrammarAnalysis(str);
+
+  linkQuatenaryType();
 }
 
 ConditionSentence: IfStatement '(' Condition ')' Sentence1 ElseStatement Sentence1 {
@@ -481,7 +499,7 @@ void assembleSemanticAnalysisTable(const char *op, const char *arg1, const char 
     semanticAnalysisTable[semanticAnalysisP - 1][4] = strdup(res);
     return;
   }
-  semanticAnalysisTable[semanticAnalysisP][0] = itoa(yylineno);
+  semanticAnalysisTable[semanticAnalysisP][0] = itoa(semanticAnalysisP);
   semanticAnalysisTable[semanticAnalysisP][1] = strdup(op);
   semanticAnalysisTable[semanticAnalysisP][2] = strdup(arg1);
   semanticAnalysisTable[semanticAnalysisP][3] = strdup(arg2);
@@ -491,7 +509,14 @@ void assembleSemanticAnalysisTable(const char *op, const char *arg1, const char 
   for (int i = 2; i < 4; i++) {
     char *last = semanticAnalysisTable[semanticAnalysisP - 1][i];
     char *current = semanticAnalysisTable[semanticAnalysisP - 2][4];
-    if (strcmp(last, current) == 0) {
+    if (strcmp(last, current) == 0 && strlen(current) != 0) {
+      int continueFlag = 0;
+      for (int j = 0; j < idP; j++) {
+        if (strcmp(current, ids[j]) == 0) {
+          continueFlag = 1;
+        }
+      }
+      if (continueFlag) continue;
       semanticAnalysisTable[semanticAnalysisP - 1][i] = symbols[symbolsP];
       semanticAnalysisTable[semanticAnalysisP - 2][4] = symbols[symbolsP];
       symbolsP++;
@@ -525,6 +550,31 @@ void printSemanticAnalysis() {
   }
 }
 
+void linkQuatenaryType() {
+  int i;
+  for (i = 0; i < semanticAnalysisP; i++) {
+    if (strlen(semanticAnalysisTable[i][4]) != 0) continue;
+    // 向后移位, 空出i+1处
+    for (int j = semanticAnalysisP; j > i + 1; j--) {
+      semanticAnalysisTable[j][0] = itoa(atoi(semanticAnalysisTable[j - 1][0]) + 1);
+      semanticAnalysisTable[j][1] = semanticAnalysisTable[j - 1][1];
+      semanticAnalysisTable[j][2] = semanticAnalysisTable[j - 1][2];
+      semanticAnalysisTable[j][3] = semanticAnalysisTable[j - 1][3];
+      semanticAnalysisTable[j][4] = semanticAnalysisTable[j - 1][4];
+    }
+    semanticAnalysisP++;
+    // i+1处添加condition = false的jump四元式
+    semanticAnalysisTable[i + 1][0] = itoa(i + 1);
+    semanticAnalysisTable[i + 1][1] = "j";
+    semanticAnalysisTable[i + 1][2] = "-";
+    semanticAnalysisTable[i + 1][3] = "-";
+    semanticAnalysisTable[i + 1][4] = itoa(semanticAnalysisP);
+    // 链接i处condition = true的jump四元式
+    semanticAnalysisTable[i][4] = itoa(i + 2);
+    break;
+  }
+}
+
 void prepareSemanticAnalysis() {
   semanticAnalysisP = 0;
   for(int i = 0; i < BUFFER_SIZE; i++) {
@@ -538,6 +588,21 @@ void prepareSemanticAnalysis() {
     sprintf(buf, "S%d", i);
     symbols[i] = strdup(buf);
   }
+  idP = 0;
+  for (int i = 0; i < BUFFER_SIZE; i++) {
+    ids[i] = "";
+  }
+}
+
+void printIdTable(const char *s) {
+  if (!showIdTable) return;
+  printf("found identifier: %s\n", s);
+}
+
+void buildIdTable(const char *s) {
+  FILE* fp;
+  fp = fopen("build/identifier_table", "a");
+  fprintf(fp, "%s\n", s);
 }
 
 char* itoa(int n) {
@@ -550,4 +615,31 @@ char* ctoa(char c) {
   char s[BUFFER_SIZE];
   sprintf(s, "%c", c);
   return strdup(s);
+}
+
+int atoi(const char *str) {
+  if (NULL == str) {
+    return 0;
+  }
+  int flag = 1;
+  int s = 0;
+  while (*str == ' ') {
+    //去除开头空格
+    str++;
+  }
+  if (*str == '+' || *str == '-') {
+    if (*str == '-') {
+      flag = -1;
+    }
+    str++;
+  } else if (*str < '0' || *str > '9') {
+    s = 2147483647;
+    return s;
+  }
+  while (*str != '\0' && *str >= '0' && *str < '9') {
+    //主要部分，减掉'0'是为了ASCII的码转为数字
+    s = s * 10 + *str - '0';
+    str++;
+  }
+  return s * flag;
 }
