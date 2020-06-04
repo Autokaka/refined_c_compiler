@@ -36,7 +36,7 @@ int atoi(const char*);
 // extra debug configs
 int showGrammarAnalysis = 0;
 int showSemanticAnalysis = 0;
-int showIdTable = 1;
+int showIdTable = 0;
 %}
 
 /* 类型 */
