@@ -3,6 +3,8 @@
 #include <math.h>
 #include <string.h>
 
+#define BUFFER_SIZE 512
+
 extern int yylineno;
 extern char *yytext;
 
@@ -12,16 +14,21 @@ int yyerror(const char *s);
 void buildGrammarAnalysisStack(const char *);
 void printGrammarAnalysis(const char *);
 
-void buildSemanticAnalysisTable(const char *, const char *, const char *, const char *);
-void printSemanticAnalysis(const char *, const char *, const char *, const char *);
+void assembleSemanticAnalysisTable(const char *, const char *, const char *, const char *);
+void buildSemanticAnalysisTable();
+void printSemanticAnalysis();
+void prepareSemanticAnalysis();
+char* semanticAnalysisTable[BUFFER_SIZE][5];
+int semanticAnalysisP;
+char* symbols[BUFFER_SIZE];
+int symbolsP;
 
 char* itoa(int);
 char* ctoa(char);
 
 // extra debug configs
 int showGrammarAnalysis = 0;
-int showSemanticAnalysis = 1;
-int bufferSize = 1024;
+int showSemanticAnalysis = 0;
 %}
 
 /* 类型 */
@@ -77,7 +84,7 @@ int bufferSize = 1024;
 
 %%
 Program: MainDeclaration '(' ')' '{' SubProgram '}' {
-  char s[bufferSize];
+  char s[BUFFER_SIZE];
   sprintf(s, "%s(){%s}", $1, $5);
   $$ = strdup(s);
 
@@ -87,7 +94,7 @@ Program: MainDeclaration '(' ')' '{' SubProgram '}' {
 }
 
 SubProgram: VarDeclarationPart ';' SentencePart {
-  char s[bufferSize];
+  char s[BUFFER_SIZE];
   sprintf(s, "%s;%s", $1, $3);
   $$ = strdup(s);
 
@@ -103,7 +110,7 @@ SubProgram: VarDeclarationPart ';' SentencePart {
 }
 
 VarDeclarationPart: VarDeclaration IdentifierTable {
-  char s[bufferSize];
+  char s[BUFFER_SIZE];
   sprintf(s, "%s%s", $1, $2);
   $$ = strdup(s);
 
@@ -113,7 +120,7 @@ VarDeclarationPart: VarDeclaration IdentifierTable {
 }
 
 IdentifierTable: Identifier SubIdentifierTable {
-  char s[bufferSize];
+  char s[BUFFER_SIZE];
   sprintf(s, "%s%s", $1, $2);
   $$ = strdup(s);
 
@@ -123,7 +130,7 @@ IdentifierTable: Identifier SubIdentifierTable {
 }
 
 SubIdentifierTable: ',' Identifier SubIdentifierTable {
-  char s[bufferSize];
+  char s[BUFFER_SIZE];
   sprintf(s, ",%s%s", $2, $3);
   $$ = strdup(s);
 
@@ -139,7 +146,7 @@ SubIdentifierTable: ',' Identifier SubIdentifierTable {
 }
 
 Identifier: Letter {
-  char s[bufferSize];
+  char s[BUFFER_SIZE];
   sprintf(s, "%c", $1);
   $$ = strdup(s);
 
@@ -147,7 +154,7 @@ Identifier: Letter {
   buildGrammarAnalysisStack(str);
   printGrammarAnalysis(str);
 } | Identifier Letter {
-  char s[bufferSize];
+  char s[BUFFER_SIZE];
   sprintf(s, "%s%c", $1, $2);
   $$ = strdup(s);
 
@@ -155,7 +162,7 @@ Identifier: Letter {
   buildGrammarAnalysisStack(str);
   printGrammarAnalysis(str);
 } | Identifier Number {
-  char s[bufferSize];
+  char s[BUFFER_SIZE];
   sprintf(s, "%s%d", $1, $2);
   $$ = strdup(s);
 
@@ -165,7 +172,7 @@ Identifier: Letter {
 }
 
 SentencePart: Sentence SubSentencePart {
-  char s[bufferSize];
+  char s[BUFFER_SIZE];
   sprintf(s, "%s%s", $1, $2);
   $$ = strdup(s);
 
@@ -175,7 +182,7 @@ SentencePart: Sentence SubSentencePart {
 }
 
 SubSentencePart: ';' Sentence SubSentencePart {
-  char s[bufferSize];
+  char s[BUFFER_SIZE];
   sprintf(s, ";%s%s", $2, $3);
   $$ = strdup(s);
 
@@ -191,7 +198,7 @@ SubSentencePart: ';' Sentence SubSentencePart {
 }
 
 Sentence: AssignSentence {
-  char s[bufferSize];
+  char s[BUFFER_SIZE];
   sprintf(s, "%s", $1);
   $$ = strdup(s);
 
@@ -199,7 +206,7 @@ Sentence: AssignSentence {
   buildGrammarAnalysisStack(str);
   printGrammarAnalysis(str);
 } | ConditionSentence {
-  char s[bufferSize];
+  char s[BUFFER_SIZE];
   sprintf(s, "%s", $1);
   $$ = strdup(s);
 
@@ -207,7 +214,7 @@ Sentence: AssignSentence {
   buildGrammarAnalysisStack(str);
   printGrammarAnalysis(str);
 } | LoopSentence {
-  char s[bufferSize];
+  char s[BUFFER_SIZE];
   sprintf(s, "%s", $1);
   $$ = strdup(s);
 
@@ -223,7 +230,7 @@ Sentence: AssignSentence {
 }
 
 AssignSentence: Identifier '=' Expression {
-  char s[bufferSize];
+  char s[BUFFER_SIZE];
   sprintf(s, "%s=%s", $1, $3);
   $$ = strdup(s);
 
@@ -231,12 +238,11 @@ AssignSentence: Identifier '=' Expression {
   buildGrammarAnalysisStack(str);
   printGrammarAnalysis(str);
 
-  buildSemanticAnalysisTable("=", $3, "", $1);
-  printSemanticAnalysis("=", $3, "", $1);
+  assembleSemanticAnalysisTable("=", $3, "", $1);
 }
 
 Condition: Expression RelationOperator Expression {
-  char s[bufferSize];
+  char s[BUFFER_SIZE];
   sprintf(s, "%s%s%s", $1, $2, $3);
   $$ = strdup(s);
 
@@ -244,22 +250,23 @@ Condition: Expression RelationOperator Expression {
   buildGrammarAnalysisStack(str);
   printGrammarAnalysis(str);
 
-  buildSemanticAnalysisTable($2, $1, $3, itoa(yylineno));
-  printSemanticAnalysis($2, $1, $3, itoa(yylineno));
+  assembleSemanticAnalysisTable($2, $1, $3, itoa(yylineno));
 }
 
 Expression: Term SubExpression {
-  char s[bufferSize];
+  char s[BUFFER_SIZE];
   sprintf(s, "%s%s", $1, $2);
   $$ = strdup(s);
 
   char *str = "Expression => Term SubExpression";
   buildGrammarAnalysisStack(str);
   printGrammarAnalysis(str);
+
+  assembleSemanticAnalysisTable("", $1, "", $$);
 }
 
 SubExpression: AddOperator Term SubExpression {
-  char s[bufferSize];
+  char s[BUFFER_SIZE];
   sprintf(s, "%c%s%s", $1, $2, $3);
   $$ = strdup(s);
 
@@ -267,8 +274,7 @@ SubExpression: AddOperator Term SubExpression {
   buildGrammarAnalysisStack(str);
   printGrammarAnalysis(str);
 
-  buildSemanticAnalysisTable(ctoa($1), $2, $3, itoa(yylineno));
-  printSemanticAnalysis(ctoa($1), $2, $3, itoa(yylineno));
+  assembleSemanticAnalysisTable(ctoa($1), "", $2, "");
 } | {
   $$ = strdup("");
 
@@ -278,17 +284,19 @@ SubExpression: AddOperator Term SubExpression {
 }
 
 Term: Factor SubTerm {
-  char s[bufferSize];
+  char s[BUFFER_SIZE];
   sprintf(s, "%s%s", $1, $2);
   $$ = strdup(s);
 
   char *str = "Term => Factor SubTerm";
   buildGrammarAnalysisStack(str);
   printGrammarAnalysis(str);
+
+  assembleSemanticAnalysisTable("", $1, "", $$);
 }
 
 SubTerm: MultiplyOperator Factor SubTerm {
-  char s[bufferSize];
+  char s[BUFFER_SIZE];
   sprintf(s, "%c%s%s", $1, $2, $3);
   $$ = strdup(s);
 
@@ -296,8 +304,7 @@ SubTerm: MultiplyOperator Factor SubTerm {
   buildGrammarAnalysisStack(str);
   printGrammarAnalysis(str);
 
-  buildSemanticAnalysisTable(ctoa($1), $2, $3, itoa(yylineno));
-  printSemanticAnalysis(ctoa($1), $2, $3, itoa(yylineno));
+  assembleSemanticAnalysisTable(ctoa($1), "", $2, "");
 } | {
   $$ = strdup("");
 
@@ -307,7 +314,7 @@ SubTerm: MultiplyOperator Factor SubTerm {
 }
 
 Factor: Identifier {
-  char s[bufferSize];
+  char s[BUFFER_SIZE];
   sprintf(s, "%s", $1);
   $$ = strdup(s);
 
@@ -315,7 +322,7 @@ Factor: Identifier {
   buildGrammarAnalysisStack(str);
   printGrammarAnalysis(str);
 } | ConstValue {
-  char s[bufferSize];
+  char s[BUFFER_SIZE];
   sprintf(s, "%s", $1);
   $$ = strdup(s);
 
@@ -323,7 +330,7 @@ Factor: Identifier {
   buildGrammarAnalysisStack(str);
   printGrammarAnalysis(str);
 } | '(' Expression ')' {
-  char s[bufferSize];
+  char s[BUFFER_SIZE];
   sprintf(s, "(%s)", $2);
   $$ = strdup(s);
 
@@ -333,7 +340,7 @@ Factor: Identifier {
 }
 
 ConstValue: UnsignedInteger {
-  char s[bufferSize];
+  char s[BUFFER_SIZE];
   sprintf(s, "%s", $1);
   $$ = strdup(s);
 
@@ -343,7 +350,7 @@ ConstValue: UnsignedInteger {
 }
 
 UnsignedInteger: NumberSequence {
-  char s[bufferSize];
+  char s[BUFFER_SIZE];
   sprintf(s, "%s", $1);
   $$ = strdup(s);
 
@@ -353,7 +360,7 @@ UnsignedInteger: NumberSequence {
 }
 
 NumberSequence: Number SubNumberSequence {
-  char s[bufferSize];
+  char s[BUFFER_SIZE];
   sprintf(s, "%d%s", $1, $2);
   $$ = strdup(s);
 
@@ -363,7 +370,7 @@ NumberSequence: Number SubNumberSequence {
 }
 
 SubNumberSequence: Number SubNumberSequence {
-  char s[bufferSize];
+  char s[BUFFER_SIZE];
   sprintf(s, "%d%s", $1, $2);
   $$ = strdup(s);
 
@@ -379,7 +386,7 @@ SubNumberSequence: Number SubNumberSequence {
 }
 
 ComplexSentence: '{' SentencePart '}' {
-  char s[bufferSize];
+  char s[BUFFER_SIZE];
   sprintf(s, "{%s}", $2);
   $$ = strdup(s);
 
@@ -389,7 +396,7 @@ ComplexSentence: '{' SentencePart '}' {
 }
 
 Sentence1: Sentence {
-  char s[bufferSize];
+  char s[BUFFER_SIZE];
   sprintf(s, "%s", $1);
   $$ = strdup(s);
 
@@ -397,7 +404,7 @@ Sentence1: Sentence {
   buildGrammarAnalysisStack(str);
   printGrammarAnalysis(str);
 } | ComplexSentence {
-  char s[bufferSize];
+  char s[BUFFER_SIZE];
   sprintf(s, "%s", $1);
   $$ = strdup(s);
 
@@ -407,7 +414,7 @@ Sentence1: Sentence {
 }
 
 ConditionSentence: IfStatement '(' Condition ')' Sentence1 ElseStatement Sentence1 {
-  char s[bufferSize];
+  char s[BUFFER_SIZE];
   sprintf(s, "%s(%s)%s%s%s", $1, $3, $5, $6, $7);
   $$ = strdup(s);
 
@@ -417,7 +424,7 @@ ConditionSentence: IfStatement '(' Condition ')' Sentence1 ElseStatement Sentenc
 }
 
 LoopSentence: WhileStatement '(' Condition ')' DoStatement Sentence1 {
-  char s[bufferSize];
+  char s[BUFFER_SIZE];
   sprintf(s, "%s(%s)%s%s", $1, $3, $5, $6);
   $$ = strdup(s);
 
@@ -429,12 +436,15 @@ LoopSentence: WhileStatement '(' Condition ')' DoStatement Sentence1 {
 %%
 
 int main(void) {
+  prepareSemanticAnalysis();
   int hasError = yyparse();
   if (hasError) {
     printf("\033[31m///////////////////////////////////////////////////////\033[0m\n");
     printf("\033[31m///////  parse failed: terminated with errors.  ///////\033[0m\n");
     printf("\033[31m///////////////////////////////////////////////////////\033[0m\n");
   } else {
+    printSemanticAnalysis();
+    buildSemanticAnalysisTable();
     printf("\033[32m//////////////////////////////////////////////////////////\033[0m\n");
     printf("\033[32m///////  0 warnings, 0 errors. Language accepted!  ///////\033[0m\n");
     printf("\033[32m//////////////////////////////////////////////////////////\033[0m\n");
@@ -459,26 +469,85 @@ void printGrammarAnalysis(const char *str) {
   printf("%s\n", str);
 }
 
-void buildSemanticAnalysisTable(const char *op, const char *arg1, const char *arg2, const char *res) {
+void assembleSemanticAnalysisTable(const char *op, const char *arg1, const char *arg2, const char *res) {
+  // 读入第一个有效四元式
+  if (semanticAnalysisP == 0 && strlen(op) == 0) return;
+
+  if (strlen(op) == 0) {
+    if (strlen(semanticAnalysisTable[semanticAnalysisP - 1][2]) > 0) {
+      return;
+    }
+    semanticAnalysisTable[semanticAnalysisP - 1][2] = strdup(arg1);
+    semanticAnalysisTable[semanticAnalysisP - 1][4] = strdup(res);
+    return;
+  }
+  semanticAnalysisTable[semanticAnalysisP][0] = itoa(yylineno);
+  semanticAnalysisTable[semanticAnalysisP][1] = strdup(op);
+  semanticAnalysisTable[semanticAnalysisP][2] = strdup(arg1);
+  semanticAnalysisTable[semanticAnalysisP][3] = strdup(arg2);
+  semanticAnalysisTable[semanticAnalysisP][4] = strdup(res);
+  semanticAnalysisP++;
+  if (semanticAnalysisP < 2) return;
+  for (int i = 2; i < 4; i++) {
+    char *last = semanticAnalysisTable[semanticAnalysisP - 1][i];
+    char *current = semanticAnalysisTable[semanticAnalysisP - 2][4];
+    if (strcmp(last, current) == 0) {
+      semanticAnalysisTable[semanticAnalysisP - 1][i] = symbols[symbolsP];
+      semanticAnalysisTable[semanticAnalysisP - 2][4] = symbols[symbolsP];
+      symbolsP++;
+    }
+  }
+}
+
+void buildSemanticAnalysisTable() {
   FILE* fp;
   fp = fopen("build/semantic_analysis_table", "a");
-  fprintf(fp, "%d: ('%s', '%s', '%s', '%s')\n", yylineno, op, arg1, arg2, res);
+  for (int i = 0; i < semanticAnalysisP; i++) {
+    fprintf(fp, "%s: (%s, %s, %s, %s)\n",
+    semanticAnalysisTable[i][0], 
+    semanticAnalysisTable[i][1], 
+    semanticAnalysisTable[i][2], 
+    semanticAnalysisTable[i][3], 
+    semanticAnalysisTable[i][4]);
+  }
   fclose(fp);
 }
 
-void printSemanticAnalysis(const char *op, const char *arg1, const char *arg2, const char *res) {
+void printSemanticAnalysis() {
   if (!showSemanticAnalysis) return;
-  printf("%d: ('%s', '%s', '%s', '%s')\n", yylineno, op, arg1, arg2, res);
+  for (int i = 0; i < semanticAnalysisP; i++) {
+    printf("%s: (%s, %s, %s, %s)\n",
+    semanticAnalysisTable[i][0], 
+    semanticAnalysisTable[i][1], 
+    semanticAnalysisTable[i][2], 
+    semanticAnalysisTable[i][3], 
+    semanticAnalysisTable[i][4]);
+  }
+}
+
+void prepareSemanticAnalysis() {
+  semanticAnalysisP = 0;
+  for(int i = 0; i < BUFFER_SIZE; i++) {
+    for (int j = 0; j < 5; j++) {
+      semanticAnalysisTable[i][j] = "";
+    }
+  }
+  symbolsP = 0;
+  for (int i = 0; i < BUFFER_SIZE; i++) {
+    char buf[BUFFER_SIZE];
+    sprintf(buf, "S%d", i);
+    symbols[i] = strdup(buf);
+  }
 }
 
 char* itoa(int n) {
-  char s[bufferSize];
+  char s[BUFFER_SIZE];
   sprintf(s, "%d", n);
   return strdup(s);
 }
 
 char* ctoa(char c) {
-  char s[bufferSize];
+  char s[BUFFER_SIZE];
   sprintf(s, "%c", c);
   return strdup(s);
 }
