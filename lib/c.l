@@ -5,7 +5,7 @@ void buildWordAnalysisTable(int);
 void printWordAnalysis(int);
 
 // extra configs
-int showWordAnalysis = 0;
+int showWordAnalysis = 1;
 %}
 
 %%

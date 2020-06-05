@@ -34,9 +34,9 @@ char* ctoa(char);
 int atoi(const char*);
 
 // extra debug configs
-int showGrammarAnalysis = 0;
-int showSemanticAnalysis = 0;
-int showIdTable = 0;
+int showGrammarAnalysis = 1;
+int showSemanticAnalysis = 1;
+int showIdTable = 1;
 %}
 
 /* 类型 */
