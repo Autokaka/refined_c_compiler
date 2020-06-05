@@ -29,9 +29,9 @@ void buildIdTable();
 char* ids[BUFFER_SIZE];
 int idP;
 
-char* itoa(int);
-char* ctoa(char);
-int atoi(const char*);
+char* unifiedItoa(int);
+char* unifiedCtoa(char);
+int unifiedAtoi(const char*);
 
 // extra debug configs
 int showGrammarAnalysis = 1;
@@ -290,7 +290,7 @@ SubExpression: AddOperator Term SubExpression {
   buildGrammarAnalysisStack(str);
   printGrammarAnalysis(str);
 
-  assembleSemanticAnalysisTable(ctoa($1), "", $2, "");
+  assembleSemanticAnalysisTable(unifiedCtoa($1), "", $2, "");
 } | {
   $$ = strdup("");
 
@@ -320,7 +320,7 @@ SubTerm: MultiplyOperator Factor SubTerm {
   buildGrammarAnalysisStack(str);
   printGrammarAnalysis(str);
 
-  assembleSemanticAnalysisTable(ctoa($1), "", $2, "");
+  assembleSemanticAnalysisTable(unifiedCtoa($1), "", $2, "");
 } | {
   $$ = strdup("");
 
@@ -499,7 +499,7 @@ void assembleSemanticAnalysisTable(const char *op, const char *arg1, const char 
     semanticAnalysisTable[semanticAnalysisP - 1][4] = strdup(res);
     return;
   }
-  semanticAnalysisTable[semanticAnalysisP][0] = itoa(semanticAnalysisP);
+  semanticAnalysisTable[semanticAnalysisP][0] = unifiedItoa(semanticAnalysisP);
   semanticAnalysisTable[semanticAnalysisP][1] = strdup(op);
   semanticAnalysisTable[semanticAnalysisP][2] = strdup(arg1);
   semanticAnalysisTable[semanticAnalysisP][3] = strdup(arg2);
@@ -556,7 +556,7 @@ void linkQuatenaryType() {
     if (strlen(semanticAnalysisTable[i][4]) != 0) continue;
     // 向后移位, 空出i+1处
     for (int j = semanticAnalysisP; j > i + 1; j--) {
-      semanticAnalysisTable[j][0] = itoa(atoi(semanticAnalysisTable[j - 1][0]) + 1);
+      semanticAnalysisTable[j][0] = unifiedItoa(unifiedAtoi(semanticAnalysisTable[j - 1][0]) + 1);
       semanticAnalysisTable[j][1] = semanticAnalysisTable[j - 1][1];
       semanticAnalysisTable[j][2] = semanticAnalysisTable[j - 1][2];
       semanticAnalysisTable[j][3] = semanticAnalysisTable[j - 1][3];
@@ -564,13 +564,13 @@ void linkQuatenaryType() {
     }
     semanticAnalysisP++;
     // i+1处添加condition = false的jump四元式
-    semanticAnalysisTable[i + 1][0] = itoa(i + 1);
+    semanticAnalysisTable[i + 1][0] = unifiedItoa(i + 1);
     semanticAnalysisTable[i + 1][1] = "j";
     semanticAnalysisTable[i + 1][2] = "-";
     semanticAnalysisTable[i + 1][3] = "-";
-    semanticAnalysisTable[i + 1][4] = itoa(semanticAnalysisP);
+    semanticAnalysisTable[i + 1][4] = unifiedItoa(semanticAnalysisP);
     // 链接i处condition = true的jump四元式
-    semanticAnalysisTable[i][4] = itoa(i + 2);
+    semanticAnalysisTable[i][4] = unifiedItoa(i + 2);
     break;
   }
 }
@@ -605,19 +605,19 @@ void buildIdTable(const char *s) {
   fprintf(fp, "%s\n", s);
 }
 
-char* itoa(int n) {
+char* unifiedItoa(int n) {
   char s[BUFFER_SIZE];
   sprintf(s, "%d", n);
   return strdup(s);
 }
 
-char* ctoa(char c) {
+char* unifiedCtoa(char c) {
   char s[BUFFER_SIZE];
   sprintf(s, "%c", c);
   return strdup(s);
 }
 
-int atoi(const char *str) {
+int unifiedAtoi(const char *str) {
   if (NULL == str) {
     return 0;
   }
